@@ -40,7 +40,7 @@ def generate_response(text):
     completion = client.chat.completions.create(
         model="qwen-max",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "system", "content": "你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生名字是迟羽墨。"},
             {"role": "user", "content": text}
         ]
     )

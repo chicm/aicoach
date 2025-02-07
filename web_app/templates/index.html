@@ -31,7 +31,6 @@
     <h1>Audio Interaction App</h1>
     <button id="recordButton">Record Audio</button>
     <button id="stopButton" style="display: none;">Stop Recording</button>
-    <button id="generateButton">Generate Response</button>
     <button id="convertButton">Convert to Speech</button>
     <div id="transcription"></div>
     <div id="response"></div>
@@ -49,6 +48,37 @@
                 audioChunks.push(event.data);
             };
 
+            function processTranscription(transcription) {
+                console.log('Transcription received:', transcription);
+                $('#transcription').text('Transcription: ' + transcription);
+
+                if (transcription && transcription.trim() !== '') {
+                    generateResponse(transcription);
+                } else {
+                    console.error('No transcription received');
+                    alert('Transcription failed. Please try recording again.');
+                }
+            }
+
+            function generateResponse(transcription) {
+                console.log('Sending generate request with transcription:', transcription);
+                fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: transcription })
+                })
+                .then(response => response.json())
+                .then(generateData => {
+                    $('#response').text('Response: ' + generateData.response);
+                })
+                .catch(error => {
+                    console.error('Error generating response:', error);
+                    alert('Failed to generate response. Please try again.');
+                });
+            }
+
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 const formData = new FormData();
@@ -60,7 +90,7 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    $('#transcription').text('Transcription: ' + data.transcription);
+                    processTranscription(data.transcription);
                 })
                 .catch(error => {
                     console.error('Error transcribing audio:', error);
@@ -77,10 +107,10 @@
         }
 
         function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
-        }
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                }
 
         $(document).ready(function() {
             $('#recordButton').click(function() {
