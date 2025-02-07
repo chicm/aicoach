@@ -31,8 +31,7 @@
     <h1>Audio Interaction App</h1>
     <button id="recordButton">Record Audio</button>
     <button id="stopButton" style="display: none;">Stop Recording</button>
-    <div id="transcription"></div>
-    <div id="response"></div>
+    <textarea id="history" rows="10" cols="50" readonly style="display:block; width:100%; margin-top:20px;"></textarea>
     <audio id="speechOutput" controls></audio>
 
     <script>
@@ -49,7 +48,8 @@
 
             function processTranscription(transcription) {
                 console.log('Transcription received:', transcription);
-                $('#transcription').text('Transcription: ' + transcription);
+                const history = document.getElementById('history');
+                history.value += 'Transcription: ' + transcription + '\n';
 
                 if (transcription && transcription.trim() !== '') {
                     generateResponse(transcription);
@@ -70,7 +70,8 @@
                 })
                 .then(response => response.json())
                 .then(generateData => {
-                    $('#response').text('Response: ' + generateData.response);
+                    const history = document.getElementById('history');
+                    history.value += 'Response: ' + generateData.response + '\n';
 
                     // Automatically convert response to speech
                     const responseText = generateData.response;

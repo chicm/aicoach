@@ -22,6 +22,9 @@ CHUNK = 1024
 RECORD_SECONDS = 5
 WAVE_OUTPUT_FILENAME = "output.wav"
 
+
+chat_history = [{"role": "system", "content": "你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生名字是迟羽墨。"}]
+
 def transcribe_audio(filename):
     messages = [
         {
@@ -33,18 +36,23 @@ def transcribe_audio(filename):
     return response['output']['choices'][0]['message']['content'][0]['text']
 
 def generate_response(text):
+    global chat_history
+
     client = openai.OpenAI(
         api_key=DASHSCOPE_API_KEY,
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
     )
+    chat_history.append({"role": "user", "content": text})
+
     completion = client.chat.completions.create(
         model="qwen-max",
-        messages=[
-            {"role": "system", "content": "你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生名字是迟羽墨。"},
-            {"role": "user", "content": text}
-        ]
+        messages=chat_history
     )
-    return json.loads(completion.model_dump_json())['choices'][0]['message']['content']
+    #return json.loads(completion.model_dump_json())['choices'][0]['message']['content']
+    response = completion.choices[0].message.content
+    chat_history.append({'role': 'assistant', 'content': response})
+    
+    return response
 
 def convert_text_to_speech(text):
     class SaveToFileCallback(dashscope.audio.tts.ResultCallback):
@@ -69,10 +77,12 @@ def convert_text_to_speech(text):
 
         def on_event(self, result: SpeechSynthesisResult):
             if result.get_audio_frame() is not None:
-                print('Writing audio frame...')
+                #print('Writing audio frame...')
                 self._file.write(result.get_audio_frame())
 
-    output_file = os.path.join(app.static_folder, 'static', 'test_output_speech.wav')
+    import uuid
+    unique_filename = f"output_speech_{uuid.uuid4().hex}.wav"
+    output_file = os.path.join(app.static_folder, 'static', unique_filename)
     callback = SaveToFileCallback(output_file)
     
     dashscope.audio.tts.SpeechSynthesizer.call(
@@ -83,6 +93,8 @@ def convert_text_to_speech(text):
         rate=1.2,
         callback=callback
     )
+    
+    return unique_filename
 
 @app.route('/')
 def index():
@@ -120,11 +132,12 @@ def generate():
 def convert():
     data = request.json
     # Generate speech and save to file
-    convert_text_to_speech(data['text'])
+    unique_filename = convert_text_to_speech(data['text'])
     
-    # Return the file URL
+    # Return the file URL with the unique filename
+    unique_audio_url = f"/static/static/{unique_filename}"
     return jsonify({
-        "audio_url": "/static/static/test_output_speech.wav"
+        "audio_url": unique_audio_url
     })
 
 @app.route('/clear-audio', methods=['DELETE'])
