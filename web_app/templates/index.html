@@ -31,7 +31,6 @@
     <h1>Audio Interaction App</h1>
     <button id="recordButton">Record Audio</button>
     <button id="stopButton" style="display: none;">Stop Recording</button>
-    <button id="convertButton">Convert to Speech</button>
     <div id="transcription"></div>
     <div id="response"></div>
     <audio id="speechOutput" controls></audio>
@@ -72,6 +71,31 @@
                 .then(response => response.json())
                 .then(generateData => {
                     $('#response').text('Response: ' + generateData.response);
+
+                    // Automatically convert response to speech
+                    const responseText = generateData.response;
+                    if (responseText) {
+                        fetch('/convert', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ text: responseText })
+                        })
+                        .then(response => response.json())
+                        .then(convertData => {
+                            if (convertData.audio_url) {
+                                const audioElement = document.getElementById('speechOutput');
+                                audioElement.src = convertData.audio_url;
+                                audioElement.play();
+                            } else {
+                                console.error('No audio URL received');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error converting text to speech:', error);
+                        });
+                    }
                 })
                 .catch(error => {
                     console.error('Error generating response:', error);
@@ -140,33 +164,6 @@
                 }
             });
 
-            $('#convertButton').click(function() {
-                const responseText = $('#response').text().split(': ')[1];
-                if (responseText) {
-                    fetch('/convert', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ text: responseText })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.audio_url) {
-                            const audioElement = document.getElementById('speechOutput');
-                            audioElement.src = data.audio_url;
-                            audioElement.play();
-                        } else {
-                            console.error('No audio URL received');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error converting text to speech:', error);
-                    });
-                } else {
-                    alert('Please generate a response first.');
-                }
-            });
         });
     </script>
 </body>
