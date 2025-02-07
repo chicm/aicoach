@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Interaction App</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        #transcription, #response {
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        audio {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio Interaction App</h1>
+    <button id="recordButton">Record Audio</button>
+    <button id="stopButton" style="display: none;">Stop Recording</button>
+    <button id="generateButton">Generate Response</button>
+    <button id="convertButton">Convert to Speech</button>
+    <div id="transcription"></div>
+    <div id="response"></div>
+    <audio id="speechOutput" controls></audio>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        async function startRecording() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.wav');
+
+                fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    $('#transcription').text('Transcription: ' + data.transcription);
+                })
+                .catch(error => {
+                    console.error('Error transcribing audio:', error);
+                });
+
+                audioChunks = [];
+                $('#recordButton').show();
+                $('#stopButton').hide();
+            };
+
+            mediaRecorder.start();
+            $('#recordButton').hide();
+            $('#stopButton').show();
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+        }
+
+        $(document).ready(function() {
+            $('#recordButton').click(function() {
+                startRecording();
+            });
+
+            $('#stopButton').click(function() {
+                stopRecording();
+            });
+
+            $('#generateButton').click(function() {
+                const transcription = $('#transcription').text().split(': ')[1];
+                if (transcription) {
+                    fetch('/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: transcription })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#response').text('Response: ' + data.response);
+                    });
+                } else {
+                    alert('Please record and transcribe the audio first.');
+                }
+            });
+
+            $('#convertButton').click(function() {
+                const responseText = $('#response').text().split(': ')[1];
+                if (responseText) {
+                    fetch('/convert', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: responseText })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.audio_url) {
+                            const audioElement = document.getElementById('speechOutput');
+                            audioElement.src = data.audio_url;
+                            audioElement.play();
+                        } else {
+                            console.error('No audio URL received');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error converting text to speech:', error);
+                    });
+                } else {
+                    alert('Please generate a response first.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
