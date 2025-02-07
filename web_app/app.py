@@ -22,8 +22,12 @@ CHUNK = 1024
 RECORD_SECONDS = 5
 WAVE_OUTPUT_FILENAME = "output.wav"
 
+SYSTEM_PROMPT = '''你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，
+如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生名字是迟羽墨，学生母语是中文。
+学生的英语水平不高，所以当你指出问题，纠正问题，或评价学生的句子时一定要用中文。只有在回答学生的英文问题时才用英文。
+'''
 
-chat_history = [{"role": "system", "content": "你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生名字是迟羽墨。"}]
+chat_history = [{"role": "system", "content": SYSTEM_PROMPT}]
 
 def transcribe_audio(filename):
     messages = [
@@ -51,6 +55,7 @@ def generate_response(text):
     #return json.loads(completion.model_dump_json())['choices'][0]['message']['content']
     response = completion.choices[0].message.content
     chat_history.append({'role': 'assistant', 'content': response})
+    print(chat_history)
     
     return response
 

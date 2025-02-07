@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Interaction App</title>
+    <title>英语教练</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
@@ -17,6 +17,43 @@
             margin: 10px 0;
             padding: 10px 20px;
             font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Record Button */
+        #recordButton {
+            background-color: #6FC276; /* Lighter green */
+            color: white;
+            font-weight: bold;
+            padding: 15px 30px; /* Larger size */
+            font-size: 18px;
+        }
+
+        #recordButton:hover {
+            background-color: #5FB468; /* Slightly darker on hover */
+        }
+
+        /* Stop Button */
+        #stopButton {
+            background-color: #F44336; /* Dark red */
+            color: white;
+            font-weight: bold;
+            padding: 15px 30px; /* Larger size */
+            font-size: 18px;
+            display: none; /* Initially hidden */
+        }
+
+        #stopButton:hover {
+            background-color: #D32F2F; /* Darker red on hover */
+        }
+
+        /* Button Container */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
         }
         #transcription, #response {
             margin: 20px 0;
@@ -28,10 +65,12 @@
     </style>
 </head>
 <body>
-    <h1>Audio Interaction App</h1>
-    <button id="recordButton">Record Audio</button>
-    <button id="stopButton" style="display: none;">Stop Recording</button>
-    <textarea id="history" rows="10" cols="50" readonly style="display:block; width:100%; margin-top:20px;"></textarea>
+    <h1>英语教练</h1>
+    <div class="button-container">
+        <button id="recordButton">开始</button>
+        <button id="stopButton">停止</button>
+    </div>
+    <textarea id="history" rows="20" cols="50" readonly style="display:block; width:100%; margin-top:20px; font-family: 'Courier New', Courier, monospace; font-size: 16px; line-height: 1.5; padding: 10px; background-color: #f9f9f9; color: #333; border: 1px solid #ddd; border-radius: 5px;"></textarea>
     <audio id="speechOutput" controls></audio>
 
     <script>
@@ -49,7 +88,8 @@
             function processTranscription(transcription) {
                 console.log('Transcription received:', transcription);
                 const history = document.getElementById('history');
-                history.value += 'Transcription: ' + transcription + '\n';
+                history.value += '迟羽墨: ' + transcription + '\n';
+                history.scrollTop = history.scrollHeight;
 
                 if (transcription && transcription.trim() !== '') {
                     generateResponse(transcription);
@@ -71,7 +111,8 @@
                 .then(response => response.json())
                 .then(generateData => {
                     const history = document.getElementById('history');
-                    history.value += 'Response: ' + generateData.response + '\n';
+                    history.value += '教练: ' + generateData.response + '\n';
+                    history.scrollTop = history.scrollHeight;
 
                     // Automatically convert response to speech
                     const responseText = generateData.response;
@@ -144,25 +185,6 @@
 
             $('#stopButton').click(function() {
                 stopRecording();
-            });
-
-            $('#generateButton').click(function() {
-                const transcription = $('#transcription').text().split(': ')[1];
-                if (transcription) {
-                    fetch('/generate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ text: transcription })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        $('#response').text('Response: ' + data.response);
-                    });
-                } else {
-                    alert('Please record and transcribe the audio first.');
-                }
             });
 
         });
