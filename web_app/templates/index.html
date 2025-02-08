@@ -27,8 +27,9 @@
             background-color: #6FC276; /* Lighter green */
             color: white;
             font-weight: bold;
-            padding: 15px 30px; /* Larger size */
-            font-size: 18px;
+            padding: 30px 60px; /* Increased size */
+            font-size: 26px; /* Larger font */
+            width: 300px; /* Longer button */
         }
 
         #recordButton:hover {
@@ -40,8 +41,9 @@
             background-color: #F44336; /* Dark red */
             color: white;
             font-weight: bold;
-            padding: 15px 30px; /* Larger size */
-            font-size: 18px;
+            padding: 30px 60px; /* Increased size */
+            font-size: 26px; /* Larger font */
+            width: 300px; /* Longer button */
             display: none; /* Initially hidden */
         }
 
@@ -67,7 +69,7 @@
 <body>
     <h1>英语教练</h1>
     <div class="button-container">
-        <button id="recordButton">开始</button>
+        <button id="recordButton" autofocus>开始</button>
         <button id="stopButton">停止</button>
     </div>
     <textarea id="history" rows="20" cols="50" readonly style="display:block; width:100%; margin-top:20px; font-family: 'Courier New', Courier, monospace; font-size: 16px; line-height: 1.5; padding: 10px; background-color: #f9f9f9; color: #333; border: 1px solid #ddd; border-radius: 5px;"></textarea>
@@ -163,20 +165,20 @@
                 });
 
                 audioChunks = [];
-                $('#recordButton').show();
+                $('#recordButton').show().focus();
                 $('#stopButton').hide();
             };
 
             mediaRecorder.start();
             $('#recordButton').hide();
-            $('#stopButton').show();
+            $('#stopButton').show().focus(); // Set focus to #stopButton
         }
 
         function stopRecording() {
-                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                        mediaRecorder.stop();
-                    }
-                }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+        }
 
         $(document).ready(function() {
             $('#recordButton').click(function() {
