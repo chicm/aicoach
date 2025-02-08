@@ -22,7 +22,7 @@ CHUNK = 1024
 RECORD_SECONDS = 5
 WAVE_OUTPUT_FILENAME = "output.wav"
 
-SYSTEM_PROMPT = '''你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，
+SYSTEM_PROMPT_ENGLISH_COACH = '''你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，
 如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生名字是迟羽墨，学生母语是中文。
 学生的英语水平不高，所以当你指出问题，纠正问题，或评价学生的句子时一定要用中文。只有在回答学生的英文问题时才用英文。
 请注意：
@@ -30,13 +30,39 @@ SYSTEM_PROMPT = '''你是一个英语陪练，帮助中国学生学习英语，�
 2. 可以主动提出设计一些场景进行对话，例如在学校教室，体育课等， 设计对话场景时，把每个人的台词也翻译成中文，另外不要太长，每人的台词最好不要超过3轮，总共不要超过6轮对话。
 '''
 
-SYSTEM_PROMPT = '''你是一个音乐创作人，可以设计任何主题的歌词和曲子。
-'''
+SYSTEM_PROMPT_FREE_TALK = ''''''
 
-SYSTEM_PROMPT = '''你在和1个8岁孩子进行自由对话。
-'''
+SYSTEM_PROMPT_KIDS = '''你在和1个8岁孩子进行自由对话。'''
 
-chat_history = [{"role": "system", "content": SYSTEM_PROMPT}]
+chat_mode = 'english_coach'
+
+chat_histories = {
+    'english_coach': [{"role": "system", "content": SYSTEM_PROMPT_ENGLISH_COACH}],
+    'free_talk': [{"role": "system", "content": SYSTEM_PROMPT_FREE_TALK}],
+    'kids': [{"role": "system", "content": SYSTEM_PROMPT_KIDS}],
+}
+
+@app.route('/chat-mode', methods=['GET', 'POST'])
+def chat_mode_handler():
+    global chat_mode
+    if request.method == 'GET':
+        return jsonify({
+            "chat_mode": chat_mode,
+            "chat_history": chat_histories[chat_mode]
+        })
+    elif request.method == 'POST':
+        data = request.json
+        new_mode = data.get('chat_mode')
+        if new_mode in chat_histories:
+            chat_mode = new_mode
+            return jsonify({
+                "status": "success",
+                "chat_mode": chat_mode,
+                "chat_history": chat_histories[chat_mode]
+            })
+        else:
+            return jsonify({"status": "error", "message": "Invalid chat mode"}), 400
+
 
 def transcribe_audio(filename):
     messages = [
@@ -49,7 +75,7 @@ def transcribe_audio(filename):
     return response['output']['choices'][0]['message']['content'][0]['text']
 
 def generate_response(text):
-    global chat_history
+    chat_history = chat_histories[chat_mode]
 
     client = openai.OpenAI(
         api_key=DASHSCOPE_API_KEY,
