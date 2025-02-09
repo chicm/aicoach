@@ -187,9 +187,9 @@ def clear_audio():
         os.remove(output_path)
     return jsonify({"status": "success"})
 
-@app.route('/static/<filename>')
-def serve_static(filename):
-    return send_from_directory(app.static_folder, filename)
+@app.route('/favicon.ico')
+def favicon():
+    return Response(status=204)  # Return an empty response for favicon requests
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
