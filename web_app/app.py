@@ -42,7 +42,7 @@ chat_histories = {
     'kids': [{"role": "system", "content": SYSTEM_PROMPT_KIDS}],
 }
 
-@app.route('/chat-mode', methods=['GET', 'POST'])
+@app.route('/api/config/chat-modes', methods=['GET', 'POST'])
 def chat_mode_handler():
     global chat_mode
     if request.method == 'GET':
@@ -141,7 +141,7 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/transcribe', methods=['POST'])
+@app.route('/api/audio/transcriptions', methods=['POST'])
 def transcribe():
     if 'audio' not in request.files:
         return jsonify({"status": "error", "message": "No audio file provided"}), 400
@@ -162,14 +162,14 @@ def transcribe():
     transcription = transcribe_audio(audio_path)
     return jsonify({"transcription": transcription})
 
-@app.route('/generate', methods=['POST'])
+@app.route('/api/ai/generate', methods=['POST'])
 def generate():
     data = request.json
     selected_model = request.json.get('model', 'qwen-max')
     response = generate_response(data['text'], model_name=selected_model)
     return jsonify({"response": response})
 
-@app.route('/convert', methods=['POST'])
+@app.route('/api/audio/synthesis', methods=['POST'])
 def convert():
     data = request.json
     # Generate speech and save to file
@@ -181,7 +181,7 @@ def convert():
         "audio_url": unique_audio_url
     })
 
-@app.route('/clear-audio', methods=['DELETE'])
+@app.route('/api/audio/synthesis', methods=['DELETE'])
 def clear_audio():
     output_path = os.path.join(app.static_folder, 'static', 'test_output_speech.wav')
     if os.path.exists(output_path):

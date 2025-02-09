@@ -47,7 +47,7 @@
 
         // Fetch the current chat mode on page load
         $(document).ready(function() {
-            fetch('/chat-mode', {
+            fetch('/api/config/chat-modes', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -71,7 +71,7 @@
             // Update chat mode when the dropdown value changes
             $('#modeSelector').change(function() {
                 const selectedMode = $(this).val();
-                fetch('/chat-mode', {
+                fetch('/api/config/chat-modes', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -124,7 +124,7 @@
             function generateResponse(transcription) {
                 console.log('Sending generate request with transcription:', transcription);
                 const selectedModel = document.getElementById('modelSelector').value;
-                fetch('/generate', {
+                fetch('/api/ai/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -143,7 +143,7 @@
                     // Automatically convert response to speech
                     const responseText = generateData.response;
                     if (responseText) {
-                        fetch('/convert', {
+                        fetch('/api/audio/synthesis', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -176,7 +176,7 @@
                 const formData = new FormData();
                 formData.append('audio', audioBlob, 'recording.wav');
 
-                fetch('/transcribe', {
+                fetch('/api/audio/transcriptions', {
                     method: 'POST',
                     body: formData
                 })
