@@ -15,7 +15,7 @@
     <div class="container">
         <div class="controls-container">
             <div class="selector-group left">
-                <select id="modeSelector" class="modern-select">
+                <select id="chatModeSelector" class="modern-select">
                     <option value="english_coach">英语教练</option>
                     <option value="free_talk">自由聊天</option>
                     <option value="kids">与小朋友聊天</option>
@@ -55,7 +55,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                $('#modeSelector').val(data.chat_mode);
+                $('#chatModeSelector').val(data.chat_mode);
                 // Update the text box with the chat history for the current mode
                 const history = data.chat_history
                     .filter(entry => entry.role !== 'system') // Exclude system entries
@@ -69,7 +69,7 @@
             });
 
             // Update chat mode when the dropdown value changes
-            $('#modeSelector').change(function() {
+            $('#chatModeSelector').change(function() {
                 const selectedMode = $(this).val();
                 fetch('/api/config/chat-modes', {
                     method: 'POST',

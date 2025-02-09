@@ -1,26 +1,15 @@
 from flask import Flask, render_template, request, jsonify, Response
 import pyaudio
-import wave
 import dashscope
 import openai
-import json
 import os
-from flask import send_from_directory
 from dashscope.api_entities.dashscope_response import SpeechSynthesisResponse
-from dashscope.audio.tts import ResultCallback, SpeechSynthesizer, SpeechSynthesisResult
+from dashscope.audio.tts import SpeechSynthesisResult
 app = Flask(__name__, static_folder='static')
 
 # Configuration
 DASHSCOPE_API_KEY = 'sk-4d336f13dfec4e9ebf4a6cb372fee73c'
 dashscope.api_key = DASHSCOPE_API_KEY
-
-# Audio recording parameters
-FORMAT = pyaudio.paInt16
-CHANNELS = 2
-RATE = 44100
-CHUNK = 1024
-RECORD_SECONDS = 5
-WAVE_OUTPUT_FILENAME = "output.wav"
 
 SYSTEM_PROMPT_ENGLISH_COACH = '''你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，
 如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生名字是迟羽墨，学生母语是中文。
@@ -30,7 +19,12 @@ SYSTEM_PROMPT_ENGLISH_COACH = '''你是一个英语陪练，帮助中国学生�
 2. 可以主动提出设计一些场景进行对话，例如在学校教室，体育课等， 设计对话场景时，把每个人的台词也翻译成中文，另外不要太长，每人的台词最好不要超过3轮，总共不要超过6轮对话。
 '''
 
-SYSTEM_PROMPT_FREE_TALK = ''''''
+SYSTEM_PROMPT_FREE_TALK = '''你是一个多语言对话助手，可以进行开放式交流，请遵守：
+1. 使用用户当前使用的语言进行回应
+2. 保持友好、专业的语气
+3. 避免敏感或争议性话题
+4. 当用户请求超出能力范围时礼貌说明
+5. 复杂问题分步骤解答'''
 
 SYSTEM_PROMPT_KIDS = '''你在和1个8岁孩子进行自由对话。'''
 
@@ -63,7 +57,6 @@ def chat_mode_handler():
         else:
             return jsonify({"status": "error", "message": "Invalid chat mode"}), 400
 
-
 def transcribe_audio(filename):
     messages = [
         {
@@ -87,7 +80,6 @@ def generate_response(text, model_name):
         model=model_name,
         messages=chat_history
     )
-    #return json.loads(completion.model_dump_json())['choices'][0]['message']['content']
     response = completion.choices[0].message.content
     chat_history.append({'role': 'assistant', 'content': response})
     print(chat_history)
