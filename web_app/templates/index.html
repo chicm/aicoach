@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI语音助手，支持英语教练、自由对话和儿童模式">
     <title>AI语音助手</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-</head>
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
 <body>
     <div class="container">
@@ -23,8 +24,8 @@
             </div>
 
             <div class="button-container">
-                <button id="recordButton" class="button">🎤 开始录音</button>
-                <button id="stopButton" class="button">⏹️ 停止录音</button>
+                <button id="recordButton" class="button button--success">🎤 开始录音</button>
+                <button id="stopButton" class="button button--danger">⏹️ 停止录音</button>
             </div>
 
             <div class="selector-group right">
@@ -40,180 +41,6 @@
         <textarea id="history" class="history-box" readonly placeholder="对话记录将在此显示..."></textarea>
 
         <audio id="speechOutput" controls></audio>
-
-    <script>
-        let mediaRecorder;
-        let audioChunks = [];
-
-        // Fetch the current chat mode on page load
-        $(document).ready(function() {
-            fetch('/api/config/chat-modes', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                $('#chatModeSelector').val(data.chat_mode);
-                // Update the text box with the chat history for the current mode
-                const history = data.chat_history
-                    .filter(entry => entry.role !== 'system') // Exclude system entries
-                    .map(entry => {
-                    return `${entry.role === 'user' ? '你' : 'AI'}: ${entry.content}`;
-                }).join('\n');
-                $('#history').val(history);
-            })
-            .catch(error => {
-                console.error('Error fetching chat mode:', error);
-            });
-
-            // Update chat mode when the dropdown value changes
-            $('#chatModeSelector').change(function() {
-                const selectedMode = $(this).val();
-                fetch('/api/config/chat-modes', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ chat_mode: selectedMode })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        console.log('Chat mode updated to:', data.chat_mode);
-                        // Clear and update the text box with the new chat history
-                        const history = data.chat_history
-                            .filter(entry => entry.role !== 'system') // Exclude system entries
-                            .map(entry => {
-                            return `${entry.role === 'user' ? '你' : 'AI'}: ${entry.content}`;
-                        }).join('\n');
-                        $('#history').val(history);
-                    } else {
-                        console.error('Error updating chat mode:', data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error updating chat mode:', error);
-                });
-            });
-        });
-
-        async function startRecording() {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-
-            function processTranscription(transcription) {
-                console.log('Transcription received:', transcription);
-                const history = document.getElementById('history');
-                history.value += '你: ' + transcription + '\n';
-                history.scrollTop = history.scrollHeight;
-
-                if (transcription && transcription.trim() !== '') {
-                    generateResponse(transcription);
-                } else {
-                    console.error('No transcription received');
-                    alert('Transcription failed. Please try recording again.');
-                }
-            }
-
-            function generateResponse(transcription) {
-                console.log('Sending generate request with transcription:', transcription);
-                const selectedModel = document.getElementById('modelSelector').value;
-                fetch('/api/ai/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        text: transcription,
-                        model: selectedModel
-                    })
-                })
-                .then(response => response.json())
-                .then(generateData => {
-                    const history = document.getElementById('history');
-                    history.value += 'AI: ' + generateData.response + '\n';
-                    history.scrollTop = history.scrollHeight;
-
-                    // Automatically convert response to speech
-                    const responseText = generateData.response;
-                    if (responseText) {
-                        fetch('/api/audio/synthesis', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ text: responseText })
-                        })
-                        .then(response => response.json())
-                        .then(convertData => {
-                            if (convertData.audio_url) {
-                                const audioElement = document.getElementById('speechOutput');
-                                audioElement.src = convertData.audio_url;
-                                audioElement.play();
-                            } else {
-                                console.error('No audio URL received');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error converting text to speech:', error);
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error generating response:', error);
-                    alert('Failed to generate response. Please try again.');
-                });
-            }
-
-            mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                const formData = new FormData();
-                formData.append('audio', audioBlob, 'recording.wav');
-
-                fetch('/api/audio/transcriptions', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    processTranscription(data.transcription);
-                })
-                .catch(error => {
-                    console.error('Error transcribing audio:', error);
-                });
-
-                audioChunks = [];
-                $('#recordButton').show().focus();
-                $('#stopButton').hide();
-            };
-
-            mediaRecorder.start();
-            $('#recordButton').hide();
-            $('#stopButton').show().focus(); // Set focus to #stopButton
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
-        }
-
-        $(document).ready(function() {
-            $('#recordButton').click(function() {
-                startRecording();
-            });
-
-            $('#stopButton').click(function() {
-                stopRecording();
-            });
-
-        });
-    </script>
+    </div>
 </body>
 </html>

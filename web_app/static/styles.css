@@ -1,20 +1,33 @@
 /* Base styles */
 :root {
-    --primary-color: #2563eb;
-    --secondary-color: #3b82f6;
-    --success-color: #10b981;
-    --danger-color: #ef4444;
-    --background-color: #e6f4ff; /* 加深浅蓝色 */
-    --text-color: #1e293b;
-    --border-color: #e2e8f0;
-    --container-bg: transparent; /* 移除半透明覆盖 */
-    --hover-darken: 10%;
+    /* 颜色系统 */
+    --color-primary: #2563eb;
+    --color-secondary: #3b82f6;
+    --color-success: #10b981;
+    --color-danger: #ef4444;
+    --color-background: #fff;
+    --color-text: #1e293b;
+    --color-border: #e2e8f0;
+
+    /* 响应式断点 */
+    --breakpoint-mobile: 640px;
+    --breakpoint-tablet: 768px;
+
+    /* 容器样式 */
+    --container-bg: #e6f4ff;
+    --container-radius: 1rem;
+    --container-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+    /* 按钮参数 */
+    --button-padding: 1rem 2rem;
+    --button-radius: 0.75rem;
+    --button-transition: all 0.2s ease;
 }
 
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background-color: white; /* 恢复白色背景 */
-    color: var(--text-color);
+    background-color: var(--color-background);
+    color: var(--color-text);
     margin: 0;
     padding: 2rem;
     min-height: 100vh;
@@ -24,10 +37,10 @@ body {
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem;
-    background: #e6f4ff; /* 主容器浅蓝色背景 */
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    min-height: 80vh; /* 增加容器最小高度 */
+    background: var(--container-bg);
+    border-radius: var(--container-radius);
+    box-shadow: var(--container-shadow);
+    min-height: 80vh;
 }
 
 /* Form controls container */
@@ -63,12 +76,12 @@ select {
     width: 100%;
     padding: 0.75rem 1.25rem;
     font-size: 1rem;
-    border: 2px solid var(--border-color);
-    border-radius: 0.75rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--button-radius);
     background-color: white;
     appearance: none;
-    transition: all 0.2s;
-    height: 52px; /* 匹配按钮高度 = padding(2*0.75rem) + 行高(1.5*1rem) + 边框(2*2px) */
+    transition: var(--button-transition);
+    height: 52px;
     line-height: 1.5;
     cursor: pointer;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -79,12 +92,10 @@ select {
 
 select:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
 }
-
-/* 已合并到通用样式 */
 
 .button-container {
     display: flex;
@@ -93,73 +104,66 @@ select:focus {
     margin: 0;
 }
 
+/* 按钮基础样式 */
 .button {
-    padding: 1rem 2rem;
+    padding: var(--button-padding);
     font-size: 1.125rem;
     font-weight: 600;
     border: none;
-    border-radius: 0.75rem;
+    border-radius: var(--button-radius);
     cursor: pointer;
-    transition:
-        transform 0.1s ease,
-        background-color 0.2s ease,
-        box-shadow 0.2s ease;
+    transition: var(--button-transition);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    height: 52px; /* 匹配下拉框高度 */
+    height: 52px;
+    color: white;
 }
 
+/* 按钮状态 */
 .button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    filter: brightness(0.9);
 }
 
 .button:active {
     transform: translateY(0);
+    filter: brightness(0.8);
 }
 
-#recordButton {
-    background-color: var(--success-color);
-    color: white;
+/* 按钮颜色变体 */
+.button--success {
+    background-color: var(--color-success);
 }
 
-#recordButton:hover {
-    background-color: #059669;
-}
-
-#stopButton {
-    background-color: var(--danger-color);
-    color: white;
-    display: none;
-}
-
-#stopButton:hover {
-    background-color: #dc2626;
+.button--danger {
+    background-color: var(--color-danger);
+    display: none; /* 初始隐藏停止按钮 */
 }
 
 /* Textarea styling */
 #history {
-    width: calc(100% - 4px); /* Account for border */
+    width: calc(100% - 4px);
     min-height: 50vh;
     height: 70vh;
     padding: 1.5rem;
     margin: 2rem 0;
-    border: 2px solid var(--border-color);
-    border-radius: 0.75rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--button-radius);
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.95rem;
     line-height: 1.6;
     background-color: white;
     resize: vertical;
     transition: border-color 0.2s;
-    box-sizing: border-box; /* Include padding and border in width */
+    box-sizing: border-box;
 }
 
 #history:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
@@ -170,19 +174,31 @@ select:focus {
     border-radius: 0.5rem;
 }
 
-/* Responsive design */
-@media (max-width: 640px) {
+/* 响应式设计 */
+@media (max-width: var(--breakpoint-mobile)) {
     .container {
         padding: 1rem;
         border-radius: 0;
+        min-height: auto;
     }
     
+    .controls-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .selector-group {
+        width: 100%;
+        max-width: none;
+    }
+
     .button {
         width: 100%;
         padding: 1rem;
     }
-    
+
     #history {
-        min-height: 200px;
+        min-height: 50vh;
+        margin: 1rem 0;
     }
 }
