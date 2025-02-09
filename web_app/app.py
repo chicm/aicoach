@@ -74,7 +74,7 @@ def transcribe_audio(filename):
     response = dashscope.MultiModalConversation.call(model="qwen-audio-asr", messages=messages)
     return response['output']['choices'][0]['message']['content'][0]['text']
 
-def generate_response(text):
+def generate_response(text, model_name):
     chat_history = chat_histories[chat_mode]
 
     client = openai.OpenAI(
@@ -84,7 +84,7 @@ def generate_response(text):
     chat_history.append({"role": "user", "content": text})
 
     completion = client.chat.completions.create(
-        model="qwen-max",
+        model=model_name,
         messages=chat_history
     )
     #return json.loads(completion.model_dump_json())['choices'][0]['message']['content']
@@ -165,7 +165,8 @@ def transcribe():
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.json
-    response = generate_response(data['text'])
+    selected_model = request.json.get('model', 'qwen-max')
+    response = generate_response(data['text'], model_name=selected_model)
     return jsonify({"response": response})
 
 @app.route('/convert', methods=['POST'])

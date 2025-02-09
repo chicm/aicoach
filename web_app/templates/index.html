@@ -13,17 +13,28 @@
 </head>
 <body>
     <div class="container">
-        <div class="select-container">
-            <select id="modeSelector" class="modern-select">
-                <option value="english_coach">英语教练</option>
-                <option value="free_talk">自由聊天</option>
-                <option value="kids">与小朋友聊天</option>
-            </select>
-        </div>
+        <div class="controls-container">
+            <div class="selector-group left">
+                <select id="modeSelector" class="modern-select">
+                    <option value="english_coach">英语教练</option>
+                    <option value="free_talk">自由聊天</option>
+                    <option value="kids">与小朋友聊天</option>
+                </select>
+            </div>
 
-        <div class="button-container">
-            <button id="recordButton" class="button">🎤 开始录音</button>
-            <button id="stopButton" class="button">⏹️ 停止录音</button>
+            <div class="button-container">
+                <button id="recordButton" class="button">🎤 开始录音</button>
+                <button id="stopButton" class="button">⏹️ 停止录音</button>
+            </div>
+
+            <div class="selector-group right">
+                <select id="modelSelector" class="modern-select">
+                    <option value="qwen-max">千问-Max</option>
+                    <option value="qwen-max-latest">千问-Max-Latest</option>
+                    <option value="deepseek-r1" selected>DeepSeek R1</option>
+                    <option value="deepseek-v3">DeepSeek V3</option>
+                </select>
+            </div>
         </div>
 
         <textarea id="history" class="history-box" readonly placeholder="对话记录将在此显示..."></textarea>
@@ -112,12 +123,16 @@
 
             function generateResponse(transcription) {
                 console.log('Sending generate request with transcription:', transcription);
+                const selectedModel = document.getElementById('modelSelector').value;
                 fetch('/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ text: transcription })
+                    body: JSON.stringify({
+                        text: transcription,
+                        model: selectedModel
+                    })
                 })
                 .then(response => response.json())
                 .then(generateData => {
