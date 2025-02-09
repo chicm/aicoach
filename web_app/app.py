@@ -86,6 +86,12 @@ def generate_response(text, model_name):
     
     return response
 
+def filter_text_for_synthesis(text):
+    if len(text):
+        return text.replace('#', '').replace('*', '')
+    else:
+        return text
+
 def convert_text_to_speech(text):
     class SaveToFileCallback(dashscope.audio.tts.ResultCallback):
         def __init__(self, filename):
@@ -119,7 +125,7 @@ def convert_text_to_speech(text):
     
     dashscope.audio.tts.SpeechSynthesizer.call(
         model='sambert-zhichu-v1',
-        text=text,
+        text=filter_text_for_synthesis(text),
         sample_rate=48000,
         format='wav',
         rate=1.2,
