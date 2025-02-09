@@ -4,15 +4,16 @@
     --secondary-color: #3b82f6;
     --success-color: #10b981;
     --danger-color: #ef4444;
-    --background-color: #f8fafc;
+    --background-color: #e6f4ff; /* 加深浅蓝色 */
     --text-color: #1e293b;
     --border-color: #e2e8f0;
+    --container-bg: transparent; /* 移除半透明覆盖 */
     --hover-darken: 10%;
 }
 
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background-color: var(--background-color);
+    background-color: white; /* 恢复白色背景 */
     color: var(--text-color);
     margin: 0;
     padding: 2rem;
@@ -23,49 +24,83 @@ body {
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem;
-    background: white;
+    background: #e6f4ff; /* 主容器浅蓝色背景 */
     border-radius: 1rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    min-height: 80vh; /* 增加容器最小高度 */
 }
 
-/* Form controls */
-.select-container {
+/* Form controls container */
+.controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
     margin-bottom: 2rem;
-    position: relative;
 }
 
-#modeSelector {
+.selector-group {
+    flex: 0 1 25%;
+    min-width: 200px;
+}
+
+.selector-group.left {
+    order: 1;
+}
+
+.button-container {
+    order: 2;
+    flex: 0 1 auto;
+}
+
+.selector-group.right {
+    order: 3;
+    text-align: right;
+}
+
+/* 统一两个下拉框样式 */
+select {
     width: 100%;
-    padding: 1rem;
-    font-size: 1.1rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
     border: 2px solid var(--border-color);
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     background-color: white;
     appearance: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s;
+    height: 52px; /* 匹配按钮高度 = padding(2*0.75rem) + 行高(1.5*1rem) + 边框(2*2px) */
+    line-height: 1.5;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.5em;
 }
 
-#modeSelector:focus {
+select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
 }
+
+/* 已合并到通用样式 */
 
 .button-container {
     display: flex;
     gap: 1rem;
     justify-content: center;
-    margin: 2rem 0;
+    margin: 0;
 }
 
 .button {
-    padding: 1.25rem 2.5rem;
-    font-size: 1.25rem;
+    padding: 1rem 2rem;
+    font-size: 1.125rem;
     font-weight: 600;
     border: none;
     border-radius: 0.75rem;
     cursor: pointer;
-    transition: 
+    transition:
         transform 0.1s ease,
         background-color 0.2s ease,
         box-shadow 0.2s ease;
@@ -73,6 +108,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    height: 52px; /* 匹配下拉框高度 */
 }
 
 .button:hover {
@@ -106,7 +142,8 @@ body {
 /* Textarea styling */
 #history {
     width: calc(100% - 4px); /* Account for border */
-    min-height: 300px;
+    min-height: 50vh;
+    height: 70vh;
     padding: 1.5rem;
     margin: 2rem 0;
     border: 2px solid var(--border-color);
