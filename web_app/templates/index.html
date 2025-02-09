@@ -5,84 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI语音助手</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        button {
-            margin: 10px 0;
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        /* Record Button */
-        #recordButton {
-            background-color: #6FC276; /* Lighter green */
-            color: white;
-            font-weight: bold;
-            padding: 30px 60px; /* Increased size */
-            font-size: 26px; /* Larger font */
-            width: 300px; /* Longer button */
-        }
-
-        #recordButton:hover {
-            background-color: #5FB468; /* Slightly darker on hover */
-        }
-
-        /* Stop Button */
-        #stopButton {
-            background-color: #F44336; /* Dark red */
-            color: white;
-            font-weight: bold;
-            padding: 30px 60px; /* Increased size */
-            font-size: 26px; /* Larger font */
-            width: 300px; /* Longer button */
-            display: none; /* Initially hidden */
-        }
-
-        #stopButton:hover {
-            background-color: #D32F2F; /* Darker red on hover */
-        }
-
-        /* Button Container */
-        .button-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        #transcription, #response {
-            margin: 20px 0;
-            font-size: 18px;
-        }
-        audio {
-            margin-top: 20px;
-        }
-        #modeSelector {
-            margin-bottom: 20px;
-            font-size: 18px;
-            padding: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
 </head>
 <body>
-    <select id="modeSelector">
-        <option value="english_coach">英语教练</option>
-        <option value="free_talk">自由聊天</option>
-        <option value="kids">与小朋友聊天</option>
-    </select>
-    <div class="button-container">
-        <button id="recordButton" autofocus>开始</button>
-        <button id="stopButton">停止</button>
-    </div>
-    <textarea id="history" rows="20" cols="50" readonly style="display:block; width:100%; margin-top:20px; font-family: 'Courier New', Courier, monospace; font-size: 16px; line-height: 1.5; padding: 10px; background-color: #f9f9f9; color: #333; border: 1px solid #ddd; border-radius: 5px;"></textarea>
-    <audio id="speechOutput" controls></audio>
+    <div class="container">
+        <div class="select-container">
+            <select id="modeSelector" class="modern-select">
+                <option value="english_coach">英语教练</option>
+                <option value="free_talk">自由聊天</option>
+                <option value="kids">与小朋友聊天</option>
+            </select>
+        </div>
+
+        <div class="button-container">
+            <button id="recordButton" class="button">🎤 开始录音</button>
+            <button id="stopButton" class="button">⏹️ 停止录音</button>
+        </div>
+
+        <textarea id="history" class="history-box" readonly placeholder="对话记录将在此显示..."></textarea>
+
+        <audio id="speechOutput" controls></audio>
 
     <script>
         let mediaRecorder;
