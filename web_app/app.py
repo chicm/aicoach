@@ -5,6 +5,7 @@ import openai
 import os
 from dashscope.api_entities.dashscope_response import SpeechSynthesisResponse
 from dashscope.audio.tts import SpeechSynthesisResult
+import uuid
 app = Flask(__name__, static_folder='static')
 
 # Configuration
@@ -118,9 +119,10 @@ def convert_text_to_speech(text):
                 #print('Writing audio frame...')
                 self._file.write(result.get_audio_frame())
 
-    import uuid
-    unique_filename = f"output_speech_{uuid.uuid4().hex}.wav"
-    output_file = os.path.join(app.static_folder, 'static', unique_filename)
+    unique_filename = f"{uuid.uuid4().hex}.wav"
+    audio_dir = os.path.join(app.static_folder, 'audio_sythesis')
+    os.makedirs(audio_dir, exist_ok=True)
+    output_file = os.path.join(audio_dir, unique_filename)
     callback = SaveToFileCallback(output_file)
     
     dashscope.audio.tts.SpeechSynthesizer.call(
@@ -149,11 +151,11 @@ def transcribe():
         return jsonify({"status": "error", "message": "No selected file"}), 400
 
     # Save the file temporarily
-    static_dir = os.path.join(app.static_folder, 'static')
-    if not os.path.exists(static_dir):
-        os.makedirs(static_dir)
+    recording_dir = os.path.join(app.static_folder, 'recording')
+    if not os.path.exists(recording_dir):
+        os.makedirs(recording_dir)
 
-    audio_path = os.path.join(static_dir, audio_file.filename)
+    audio_path = os.path.join(recording_dir, f"{uuid.uuid4().hex}.wav")
     audio_file.save(audio_path)
 
     # Transcribe the audio
@@ -174,17 +176,11 @@ def convert():
     unique_filename = convert_text_to_speech(data['text'])
     
     # Return the file URL with the unique filename
-    unique_audio_url = f"/static/static/{unique_filename}"
+    unique_audio_url = f"/static/audio_sythesis/{unique_filename}"
     return jsonify({
         "audio_url": unique_audio_url
     })
 
-@app.route('/api/audio/synthesis', methods=['DELETE'])
-def clear_audio():
-    output_path = os.path.join(app.static_folder, 'static', 'test_output_speech.wav')
-    if os.path.exists(output_path):
-        os.remove(output_path)
-    return jsonify({"status": "success"})
 
 @app.route('/favicon.ico')
 def favicon():
