@@ -1,5 +1,3 @@
 Flask
-pyaudio
-wave
 dashscope
 openai

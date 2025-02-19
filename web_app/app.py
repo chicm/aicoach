@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, Response
-import pyaudio
 import dashscope
 import openai
 import os
@@ -65,7 +64,7 @@ def transcribe_audio(filename):
             "content": [{"audio": filename}]
         }
     ]
-    response = dashscope.MultiModalConversation.call(model="qwen-audio-asr", messages=messages)
+    response = dashscope.MultiModalConversation.call(model="qwen-audio-asr-latest", messages=messages)
     return response['output']['choices'][0]['message']['content'][0]['text']
 
 def generate_response(text, model_name):
@@ -187,4 +186,7 @@ def favicon():
     return Response(status=204)  # Return an empty response for favicon requests
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(
+        host='0.0.0.0',
+        debug=True,
+    )
