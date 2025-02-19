@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 import dashscope
 import openai
 import os
 from dashscope.api_entities.dashscope_response import SpeechSynthesisResponse
 from dashscope.audio.tts import SpeechSynthesisResult
 import uuid
+import json
 app = Flask(__name__, static_folder='static')
 
 # Configuration
@@ -69,7 +70,6 @@ def transcribe_audio(filename):
 
 def generate_response(text, model_name):
     chat_history = chat_histories[chat_mode]
-
     client = openai.OpenAI(
         api_key=DASHSCOPE_API_KEY,
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
@@ -78,13 +78,19 @@ def generate_response(text, model_name):
 
     completion = client.chat.completions.create(
         model=model_name,
-        messages=chat_history
+        messages=chat_history,
+        stream=True
     )
-    response = completion.choices[0].message.content
-    chat_history.append({'role': 'assistant', 'content': response})
-    print(chat_history)
     
-    return response
+    full_response = ""
+    for chunk in completion:
+        if chunk.choices and chunk.choices[0].delta.content:
+            content = chunk.choices[0].delta.content
+            full_response += content
+            yield content
+
+    chat_history.append({'role': 'assistant', 'content': full_response})
+    print(chat_history)
 
 def filter_text_for_synthesis(text):
     if len(text):
@@ -139,7 +145,6 @@ def convert_text_to_speech(text):
 def index():
     return render_template('index.html')
 
-
 @app.route('/api/audio/transcriptions', methods=['POST'])
 def transcribe():
     if 'audio' not in request.files:
@@ -165,8 +170,12 @@ def transcribe():
 def generate():
     data = request.json
     selected_model = request.json.get('model', 'qwen-max')
-    response = generate_response(data['text'], model_name=selected_model)
-    return jsonify({"response": response})
+    
+    def generate_stream():
+        for content in generate_response(data['text'], model_name=selected_model):
+            yield f"data: {json.dumps({'content': content})}\n\n"
+    
+    return Response(stream_with_context(generate_stream()), mimetype='text/event-stream')
 
 @app.route('/api/audio/synthesis', methods=['POST'])
 def convert():
@@ -179,7 +188,6 @@ def convert():
     return jsonify({
         "audio_url": unique_audio_url
     })
-
 
 @app.route('/favicon.ico')
 def favicon():

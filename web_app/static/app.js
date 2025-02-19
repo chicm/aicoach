@@ -74,51 +74,84 @@ async function startRecording() {
         }
     }
 
-    function generateResponse(transcription) {
+    async function generateResponse(transcription) {
         console.log('Sending generate request with transcription:', transcription);
         const selectedModel = document.getElementById('modelSelector').value;
-        fetch('/api/ai/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                text: transcription,
-                model: selectedModel
-            })
-        })
-        .then(response => response.json())
-        .then(generateData => {
-            const history = document.getElementById('history');
-            history.value += 'AI: ' + generateData.response + '\n';
-            history.scrollTop = history.scrollHeight;
+        const history = document.getElementById('history');
+        let fullResponse = '';
+        
+        // Get the current history content and add AI: prefix
+        const currentHistory = history.value;
+        history.value = currentHistory + 'AI: ';
+        const responseStartIndex = history.value.length;
+        
+        try {
+            const response = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: transcription,
+                    model: selectedModel
+                })
+            });
 
-            const responseText = generateData.response;
-            if (responseText) {
-                fetch('/api/audio/synthesis', {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const {done, value} = await reader.read();
+                
+                if (done) {
+                    break;
+                }
+
+                const chunk = decoder.decode(value, {stream: true});
+                const lines = chunk.split('\n');
+                
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.content) {
+                                fullResponse += data.content;
+                                // Update only the response part, keeping the rest of the history intact
+                                history.value = currentHistory + 'AI: ' + fullResponse;
+                                history.scrollTop = history.scrollHeight;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing SSE data:', e);
+                        }
+                    }
+                }
+            }
+
+            // After stream completes, add newline
+            history.value += '\n';
+            
+            // Generate audio
+            console.log('Generating audio for response:', fullResponse);
+            if (fullResponse) {
+                const audioResponse = await fetch('/api/audio/synthesis', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ text: responseText })
-                })
-                .then(response => response.json())
-                .then(convertData => {
-                    if (convertData.audio_url) {
-                        const audioElement = document.getElementById('speechOutput');
-                        audioElement.src = convertData.audio_url;
-                        audioElement.play();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error converting text to speech:', error);
+                    body: JSON.stringify({ text: fullResponse })
                 });
+                
+                const audioData = await audioResponse.json();
+                if (audioData.audio_url) {
+                    const audioElement = document.getElementById('speechOutput');
+                    audioElement.src = audioData.audio_url;
+                    audioElement.play();
+                }
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error generating response:', error);
             alert('Failed to generate response. Please try again.');
-        });
+        }
     }
 
     mediaRecorder.onstop = () => {
