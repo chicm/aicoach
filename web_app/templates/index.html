@@ -17,21 +17,13 @@
 </head>
 <body>
     <div class="container">
-        <div class="selector-group">
-            <select id="chatModeSelector" class="modern-select">
-                <option value="english_coach">英语教练</option>
-                <option value="free_talk">自由聊天</option>
-                <option value="kids">与小朋友聊天</option>
-            </select>
-        </div>
-
-        <div class="selector-group">
-            <select id="modelSelector" class="modern-select">
-                <option value="qwen-max" selected>千问-Max</option>
-                <option value="qwen-max-latest">千问-Max-Latest</option>
-                <option value="deepseek-r1">DeepSeek R1</option>
-                <option value="deepseek-v3">DeepSeek V3</option>
-            </select>
+        <div class="header">
+            <button id="settingsButton" class="settings-button" aria-label="设置">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
         </div>
 
         <textarea id="history" class="history-box" readonly placeholder="对话记录将在此显示..."></textarea>
@@ -42,6 +34,35 @@
         </div>
 
         <audio id="speechOutput" controls></audio>
+
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>设置</h2>
+                    <button class="close-button" aria-label="关闭">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-group">
+                        <label for="chatModeSelector">对话模式</label>
+                        <select id="chatModeSelector" class="modern-select">
+                            <option value="english_coach">英语教练</option>
+                            <option value="free_talk">自由聊天</option>
+                            <option value="kids">与小朋友聊天</option>
+                        </select>
+                    </div>
+
+                    <div class="settings-group">
+                        <label for="modelSelector">AI模型</label>
+                        <select id="modelSelector" class="modern-select">
+                            <option value="qwen-max" selected>千问-Max</option>
+                            <option value="qwen-max-latest">千问-Max-Latest</option>
+                            <option value="deepseek-r1">DeepSeek R1</option>
+                            <option value="deepseek-v3">DeepSeek V3</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

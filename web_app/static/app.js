@@ -1,8 +1,46 @@
 let mediaRecorder;
 let audioChunks = [];
 
-// Fetch the current chat mode on page load
+// Settings Modal Functionality
+function initializeSettingsModal() {
+    const $settingsButton = $('#settingsButton');
+    const $settingsModal = $('#settingsModal');
+    const $closeButton = $settingsModal.find('.close-button');
+
+    function openModal() {
+        $settingsModal.fadeIn(200);
+        $('body').css('overflow', 'hidden');
+    }
+
+    function closeModal() {
+        $settingsModal.fadeOut(200);
+        $('body').css('overflow', '');
+    }
+
+    // Event Listeners for Modal
+    $settingsButton.on('click', openModal);
+    $closeButton.on('click', closeModal);
+
+    // Close modal when clicking outside
+    $(window).on('click', (event) => {
+        if ($(event.target).is($settingsModal)) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    $(document).on('keydown', (event) => {
+        if (event.key === 'Escape' && $settingsModal.is(':visible')) {
+            closeModal();
+        }
+    });
+}
+
+// Initialize on page load
 $(document).ready(function() {
+    // Initialize settings modal
+    initializeSettingsModal();
+
     fetch('/api/config/chat-modes', {
         method: 'GET',
         headers: {
