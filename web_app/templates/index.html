@@ -17,31 +17,29 @@
 </head>
 <body>
     <div class="container">
-        <div class="controls-container">
-            <div class="selector-group left">
-                <select id="chatModeSelector" class="modern-select">
-                    <option value="english_coach">英语教练</option>
-                    <option value="free_talk">自由聊天</option>
-                    <option value="kids">与小朋友聊天</option>
-                </select>
-            </div>
+        <div class="selector-group">
+            <select id="chatModeSelector" class="modern-select">
+                <option value="english_coach">英语教练</option>
+                <option value="free_talk">自由聊天</option>
+                <option value="kids">与小朋友聊天</option>
+            </select>
+        </div>
 
-            <div class="button-container">
-                <button id="recordButton" class="button button--success">🎤 开始录音</button>
-                <button id="stopButton" class="button button--danger">⏹️ 停止录音</button>
-            </div>
-
-            <div class="selector-group right">
-                <select id="modelSelector" class="modern-select">
-                    <option value="qwen-max">千问-Max</option>
-                    <option value="qwen-max-latest">千问-Max-Latest</option>
-                    <option value="deepseek-r1" selected>DeepSeek R1</option>
-                    <option value="deepseek-v3">DeepSeek V3</option>
-                </select>
-            </div>
+        <div class="selector-group">
+            <select id="modelSelector" class="modern-select">
+                <option value="qwen-max" selected>千问-Max</option>
+                <option value="qwen-max-latest">千问-Max-Latest</option>
+                <option value="deepseek-r1">DeepSeek R1</option>
+                <option value="deepseek-v3">DeepSeek V3</option>
+            </select>
         </div>
 
         <textarea id="history" class="history-box" readonly placeholder="对话记录将在此显示..."></textarea>
+
+        <div class="button-container">
+            <button id="recordButton" class="button button--success">🎤 开始录音</button>
+            <button id="stopButton" class="button button--danger">⏹️ 停止录音</button>
+        </div>
 
         <audio id="speechOutput" controls></audio>
     </div>

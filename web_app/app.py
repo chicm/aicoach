@@ -29,7 +29,7 @@ SYSTEM_PROMPT_FREE_TALK = '''你是一个多语言对话助手，可以进行开
 
 SYSTEM_PROMPT_KIDS = '''你在和1个8岁孩子进行自由对话。'''
 
-chat_mode = 'english_coach'
+chat_mode = 'free_talk'
 
 chat_histories = {
     'english_coach': [{"role": "system", "content": SYSTEM_PROMPT_ENGLISH_COACH}],
