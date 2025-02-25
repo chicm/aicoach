@@ -29,34 +29,77 @@ SYSTEM_PROMPT_FREE_TALK = '''你是一个多语言对话助手，可以进行开
 
 SYSTEM_PROMPT_KIDS = '''你在和1个8岁孩子进行自由对话。'''
 
-chat_mode = 'free_talk'
+# Chat storage
+chats = {}
 
-chat_histories = {
-    'english_coach': [{"role": "system", "content": SYSTEM_PROMPT_ENGLISH_COACH}],
-    'free_talk': [{"role": "system", "content": SYSTEM_PROMPT_FREE_TALK}],
-    'kids': [{"role": "system", "content": SYSTEM_PROMPT_KIDS}],
-}
+def get_system_prompt(chat_mode):
+    prompts = {
+        'english_coach': SYSTEM_PROMPT_ENGLISH_COACH,
+        'free_talk': SYSTEM_PROMPT_FREE_TALK,
+        'kids': SYSTEM_PROMPT_KIDS
+    }
+    return prompts.get(chat_mode, SYSTEM_PROMPT_FREE_TALK)
 
-@app.route('/api/config/chat-modes', methods=['GET', 'POST'])
-def chat_mode_handler():
-    global chat_mode
+def create_new_chat(device_id, chat_mode='free_talk'):
+    chat_id = str(uuid.uuid4())
+    chat = {
+        'chat_id': chat_id,
+        'device_id': device_id,
+        'chat_mode': chat_mode,
+        'history': [{"role": "system", "content": get_system_prompt(chat_mode)}]
+    }
+    chats[chat_id] = chat
+    return chat
+
+@app.route('/api/chats', methods=['GET', 'POST'])
+def chat_handler():
+
+    for k in chats:
+        print(chats[k]['chat_id'], chats[k]['device_id'], chats[k]['chat_mode'])
+
+    device_id = request.headers.get('X-Device-ID')
+    if not device_id:
+        return jsonify({"status": "error", "message": "Device ID required"}), 400
+
     if request.method == 'GET':
-        return jsonify({
-            "chat_mode": chat_mode,
-            "chat_history": chat_histories[chat_mode]
-        })
+        # Get all chats for the device
+        device_chats = [chat for chat in chats.values() if chat['device_id'] == device_id]
+        return jsonify({"chats": device_chats})
+
     elif request.method == 'POST':
+        # Create a new chat
+        data = request.json
+        chat_mode = data.get('chat_mode', 'free_talk')
+        new_chat = create_new_chat(device_id, chat_mode)
+        return jsonify({"status": "success", "chat": new_chat})
+
+@app.route('/api/chats/<chat_id>', methods=['GET', 'PUT', 'DELETE'])
+def chat_detail_handler(chat_id):
+    device_id = request.headers.get('X-Device-ID')
+    if not device_id:
+        return jsonify({"status": "error", "message": "Device ID required"}), 400
+
+    if chat_id not in chats:
+        return jsonify({"status": "error", "message": "Chat not found"}), 404
+
+    chat = chats[chat_id]
+    if chat['device_id'] != device_id:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+
+    if request.method == 'GET':
+        return jsonify(chat)
+
+    elif request.method == 'PUT':
         data = request.json
         new_mode = data.get('chat_mode')
-        if new_mode in chat_histories:
-            chat_mode = new_mode
-            return jsonify({
-                "status": "success",
-                "chat_mode": chat_mode,
-                "chat_history": chat_histories[chat_mode]
-            })
-        else:
-            return jsonify({"status": "error", "message": "Invalid chat mode"}), 400
+        if new_mode:
+            chat['chat_mode'] = new_mode
+            chat['history'] = [{"role": "system", "content": get_system_prompt(new_mode)}]
+        return jsonify({"status": "success", "chat": chat})
+
+    elif request.method == 'DELETE':
+        del chats[chat_id]
+        return jsonify({"status": "success"})
 
 def transcribe_audio(filename):
     messages = [
@@ -68,12 +111,18 @@ def transcribe_audio(filename):
     response = dashscope.MultiModalConversation.call(model="qwen-audio-asr-latest", messages=messages)
     return response['output']['choices'][0]['message']['content'][0]['text']
 
-def generate_response(text, model_name):
-    chat_history = chat_histories[chat_mode]
+def generate_response(text, model_name, chat_id):
+    if chat_id not in chats:
+        return None
+
+    chat = chats[chat_id]
+    chat_history = chat['history']
+    
     client = openai.OpenAI(
         api_key=DASHSCOPE_API_KEY,
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
     )
+    
     chat_history.append({"role": "user", "content": text})
 
     completion = client.chat.completions.create(
@@ -90,7 +139,7 @@ def generate_response(text, model_name):
             yield content
 
     chat_history.append({'role': 'assistant', 'content': full_response})
-    print(chat_history)
+    chats[chat_id] = chat  # Update the chat in storage
 
 def filter_text_for_synthesis(text):
     if len(text):
@@ -131,7 +180,7 @@ def convert_text_to_speech(text):
     callback = SaveToFileCallback(output_file)
     
     dashscope.audio.tts.SpeechSynthesizer.call(
-        model='sambert-zhimiao-emo-v1',
+        model='sambert-zhichu-v1',
         text=filter_text_for_synthesis(text),
         sample_rate=48000,
         format='wav',
@@ -168,11 +217,25 @@ def transcribe():
 
 @app.route('/api/ai/generate', methods=['POST'])
 def generate():
+    device_id = request.headers.get('X-Device-ID')
+    if not device_id:
+        return jsonify({"status": "error", "message": "Device ID required"}), 400
+
     data = request.json
-    selected_model = request.json.get('model', 'qwen-max')
+    chat_id = data.get('chat_id')
+    if not chat_id:
+        return jsonify({"status": "error", "message": "Chat ID required"}), 400
+
+    if chat_id not in chats or chats[chat_id]['device_id'] != device_id:
+        return jsonify({"status": "error", "message": "Invalid chat ID"}), 403
+
+    selected_model = data.get('model', 'qwen-max')
     
     def generate_stream():
-        for content in generate_response(data['text'], model_name=selected_model):
+        for content in generate_response(data['text'], model_name=selected_model, chat_id=chat_id):
+            if content is None:
+                yield f"data: {json.dumps({'error': 'Chat not found'})}\n\n"
+                break
             yield f"data: {json.dumps({'content': content})}\n\n"
     
     return Response(stream_with_context(generate_stream()), mimetype='text/event-stream')

@@ -5,7 +5,15 @@
     margin-bottom: 1rem;
 }
 
-.settings-button {
+/* Header and Icon Buttons */
+.header {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.icon-button {
     background: none;
     border: none;
     cursor: pointer;
@@ -18,9 +26,16 @@
     justify-content: center;
 }
 
-.settings-button:hover {
+.icon-button:hover {
     background-color: rgba(0, 0, 0, 0.05);
+}
+
+#settingsButton:hover {
     transform: rotate(30deg);
+}
+
+#newChatButton:hover {
+    transform: scale(1.1);
 }
 
 /* Modal Styles */
@@ -71,6 +86,8 @@
 
 .modal-body {
     padding: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
 .settings-group {
@@ -86,6 +103,52 @@
     margin-bottom: 0.5rem;
     font-weight: 500;
     color: var(--color-text);
+}
+
+/* Chat List Styles */
+.chat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.chat-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--button-radius);
+    background-color: white;
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chat-item:hover {
+    border-color: var(--color-primary);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.chat-item.active {
+    border-color: var(--color-primary);
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.chat-item-content {
+    flex: 1;
+}
+
+.chat-item-title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.chat-item-preview {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Base styles */

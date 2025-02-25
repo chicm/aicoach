@@ -1,5 +1,139 @@
 let mediaRecorder;
 let audioChunks = [];
+let currentChatId = null;
+
+// Device ID management
+function getDeviceId() {
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+        deviceId = 'device_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('deviceId', deviceId);
+    }
+    return deviceId;
+}
+
+// Chat management
+async function createNewChat() {
+    try {
+        const response = await fetch('/api/chats', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Device-ID': getDeviceId()
+            },
+            body: JSON.stringify({
+                chat_mode: $('#chatModeSelector').val()
+            })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+            currentChatId = data.chat.chat_id;
+            $('#history').val(''); // Clear history for new chat
+            return data.chat;
+        } else {
+            console.error('Error creating new chat:', data.message);
+        }
+    } catch (error) {
+        console.error('Error creating new chat:', error);
+    }
+}
+
+// Chat History Modal Functionality
+function initializeChatHistoryModal() {
+    const $chatHistoryButton = $('#chatHistoryButton');
+    const $chatHistoryModal = $('#chatHistoryModal');
+    const $closeButton = $chatHistoryModal.find('.close-button');
+    const $chatList = $('#chatList');
+
+    async function loadChatList() {
+        try {
+            const response = await fetch('/api/chats', {
+                headers: {
+                    'X-Device-ID': getDeviceId()
+                }
+            });
+            const data = await response.json();
+            
+            if (data.chats) {
+                $chatList.empty();
+                data.chats.forEach(chat => {
+                    const lastMessage = chat.history
+                        .filter(msg => msg.role !== 'system')
+                        .pop();
+                    const preview = lastMessage
+                        ? `${lastMessage.role === 'user' ? '你' : 'AI'}: ${lastMessage.content.substring(0, 50)}...`
+                        : '新对话';
+                    
+                    const $chatItem = $(`
+                        <div class="chat-item ${chat.chat_id === currentChatId ? 'active' : ''}" data-chat-id="${chat.chat_id}">
+                            <div class="chat-item-content">
+                                <div class="chat-item-title">${getChatModeLabel(chat.chat_mode)}</div>
+                                <div class="chat-item-preview">${preview}</div>
+                            </div>
+                        </div>
+                    `);
+                    
+                    $chatItem.on('click', () => switchToChat(chat));
+                    $chatList.append($chatItem);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading chat list:', error);
+        }
+    }
+
+    function getChatModeLabel(mode) {
+        const modes = {
+            'english_coach': '英语教练',
+            'free_talk': '自由聊天',
+            'kids': '与小朋友聊天'
+        };
+        return modes[mode] || mode;
+    }
+
+    async function switchToChat(chat) {
+        currentChatId = chat.chat_id;
+        $('#chatModeSelector').val(chat.chat_mode);
+        
+        const chatHistory = chat.history
+            .filter(entry => entry.role !== 'system')
+            .map(entry => `${entry.role === 'user' ? '你' : 'AI'}: ${entry.content}`)
+            .join('\n');
+        $('#history').val(chatHistory);
+        
+        closeModal();
+    }
+
+    function openModal() {
+        loadChatList();
+        $chatHistoryModal.fadeIn(200);
+        $('body').css('overflow', 'hidden');
+    }
+
+    function closeModal() {
+        $chatHistoryModal.fadeOut(200);
+        $('body').css('overflow', '');
+    }
+
+    // Event Listeners
+    $chatHistoryButton.on('click', openModal);
+    $closeButton.on('click', closeModal);
+
+    // Close modal when clicking outside
+    $(window).on('click', (event) => {
+        if ($(event.target).is($chatHistoryModal)) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    $(document).on('keydown', (event) => {
+        if (event.key === 'Escape' && $chatHistoryModal.is(':visible')) {
+            closeModal();
+        }
+    });
+}
 
 // Settings Modal Functionality
 function initializeSettingsModal() {
@@ -37,56 +171,62 @@ function initializeSettingsModal() {
 }
 
 // Initialize on page load
-$(document).ready(function() {
-    // Initialize settings modal
+$(document).ready(async function() {
+    // Initialize modals
     initializeSettingsModal();
+    initializeChatHistoryModal();
 
-    fetch('/api/config/chat-modes', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
+    // Initialize new chat button
+    $('#newChatButton').on('click', createNewChat);
+
+    // Create initial chat if none exists
+    try {
+        const response = await fetch('/api/chats', {
+            headers: {
+                'X-Device-ID': getDeviceId()
+            }
+        });
+        const data = await response.json();
+        if (data.chats && data.chats.length > 0) {
+            currentChatId = data.chats[0].chat_id;
+            const chatHistory = data.chats[0].history
+                .filter(entry => entry.role !== 'system')
+                .map(entry => `${entry.role === 'user' ? '你' : 'AI'}: ${entry.content}`)
+                .join('\n');
+            $('#history').val(chatHistory);
+            $('#chatModeSelector').val(data.chats[0].chat_mode);
+        } else {
+            await createNewChat();
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        $('#chatModeSelector').val(data.chat_mode);
-        const history = data.chat_history
-            .filter(entry => entry.role !== 'system')
-            .map(entry => {
-                return `${entry.role === 'user' ? '你' : 'AI'}: ${entry.content}`;
-            }).join('\n');
-        $('#history').val(history);
-    })
-    .catch(error => {
-        console.error('Error fetching chat mode:', error);
-    });
+    } catch (error) {
+        console.error('Error fetching chats:', error);
+        await createNewChat();
+    }
 
     // Update chat mode when dropdown changes
-    $('#chatModeSelector').change(function() {
+    $('#chatModeSelector').change(async function() {
+        if (!currentChatId) return;
+        
         const selectedMode = $(this).val();
-        fetch('/api/config/chat-modes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ chat_mode: selectedMode })
-        })
-        .then(response => response.json())
-        .then(data => {
+        try {
+            const response = await fetch(`/api/chats/${currentChatId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-ID': getDeviceId()
+                },
+                body: JSON.stringify({ chat_mode: selectedMode })
+            });
+            
+            const data = await response.json();
             if (data.status === 'success') {
-                const history = data.chat_history
-                    .filter(entry => entry.role !== 'system')
-                    .map(entry => {
-                        return `${entry.role === 'user' ? '你' : 'AI'}: ${entry.content}`;
-                    }).join('\n');
-                $('#history').val(history);
+                $('#history').val(''); // Clear history for new chat mode
             } else {
                 console.error('Error updating chat mode:', data.message);
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error updating chat mode:', error);
-        });
+        }
     });
 
     // Initialize recording event handlers for both click and touch
@@ -120,6 +260,12 @@ function processTranscription(transcription) {
 }
 
 async function generateResponse(transcription) {
+    if (!currentChatId) {
+        console.error('No active chat');
+        alert('No active chat session. Please try again.');
+        return;
+    }
+
     console.log('Sending generate request with transcription:', transcription);
     const selectedModel = document.getElementById('modelSelector').value;
     const history = document.getElementById('history');
@@ -133,11 +279,13 @@ async function generateResponse(transcription) {
         const response = await fetch('/api/ai/generate', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Device-ID': getDeviceId()
             },
             body: JSON.stringify({
                 text: transcription,
-                model: selectedModel
+                model: selectedModel,
+                chat_id: currentChatId
             })
         });
 

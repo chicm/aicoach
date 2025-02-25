@@ -18,7 +18,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <button id="settingsButton" class="settings-button" aria-label="设置">
+            <button id="chatHistoryButton" class="icon-button" aria-label="历史对话">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button id="newChatButton" class="icon-button" aria-label="新对话">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button id="settingsButton" class="icon-button" aria-label="设置">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -59,6 +69,20 @@
                             <option value="deepseek-r1">DeepSeek R1</option>
                             <option value="deepseek-v3">DeepSeek V3</option>
                         </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatHistoryModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>历史对话</h2>
+                    <button class="close-button" aria-label="关闭">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="chatList" class="chat-list">
+                        <!-- Chat list will be populated dynamically -->
                     </div>
                 </div>
             </div>
