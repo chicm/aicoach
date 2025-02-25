@@ -13,7 +13,7 @@ DASHSCOPE_API_KEY = 'sk-4d336f13dfec4e9ebf4a6cb372fee73c'
 dashscope.api_key = DASHSCOPE_API_KEY
 
 SYSTEM_PROMPT_ENGLISH_COACH = '''你是一个英语陪练，帮助中国学生学习英语，如果学生问你一个中文问题，你需要告诉学生如何用英文来问，如果学生问你一个英文问题，请你检查学生问的有没有问题，
-如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生名字是迟羽墨，学生母语是中文。
+如果有问题，指出如何纠正问题，如果没有问题，你需要用英语回答学生的问题。学生母语是中文。
 学生的英语水平不高，所以当你指出问题，纠正问题，或评价学生的句子时一定要用中文。只有在回答学生的英文问题时才用英文。
 请注意：
 1. 学生说的话是经过语音识别转成文本的，没有标点符号，所以不要去纠正学生标点符号的问题。
@@ -131,7 +131,7 @@ def convert_text_to_speech(text):
     callback = SaveToFileCallback(output_file)
     
     dashscope.audio.tts.SpeechSynthesizer.call(
-        model='sambert-zhichu-v1',
+        model='sambert-zhimiao-emo-v1',
         text=filter_text_for_synthesis(text),
         sample_rate=48000,
         format='wav',
