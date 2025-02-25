@@ -12,8 +12,25 @@ function getDeviceId() {
     return deviceId;
 }
 
+// Hint management
+function showHint(message, duration = 3000) {
+    const $hint = $('#hint');
+    $hint.text(message).addClass('show');
+    
+    setTimeout(() => {
+        $hint.removeClass('show');
+    }, duration);
+}
+
 // Chat management
 async function createNewChat() {
+    // Check if current chat is empty
+    const currentHistory = $('#history').val().trim();
+    if (currentChatId && !currentHistory) {
+        showHint('您已经在新对话中');
+        return;
+    }
+
     try {
         const response = await fetch('/api/chats', {
             method: 'POST',
