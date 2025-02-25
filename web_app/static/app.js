@@ -22,40 +22,6 @@ function showHint(message, duration = 3000) {
     }, duration);
 }
 
-// Chat management
-async function createNewChat() {
-    // Check if current chat is empty
-    const currentHistory = $('#history').val().trim();
-    if (currentChatId && !currentHistory) {
-        showHint('您已经在新对话中');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/chats', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Device-ID': getDeviceId()
-            },
-            body: JSON.stringify({
-                chat_mode: $('#chatModeSelector').val()
-            })
-        });
-        
-        const data = await response.json();
-        if (data.status === 'success') {
-            currentChatId = data.chat.chat_id;
-            $('#history').val(''); // Clear history for new chat
-            return data.chat;
-        } else {
-            console.error('Error creating new chat:', data.message);
-        }
-    } catch (error) {
-        console.error('Error creating new chat:', error);
-    }
-}
-
 // Chat History Modal Functionality
 function initializeChatHistoryModal() {
     const $chatHistoryButton = $('#chatHistoryButton');
@@ -152,36 +118,73 @@ function initializeChatHistoryModal() {
     });
 }
 
-// Settings Modal Functionality
-function initializeSettingsModal() {
-    const $settingsButton = $('#settingsButton');
-    const $settingsModal = $('#settingsModal');
-    const $closeButton = $settingsModal.find('.close-button');
+// New Chat Modal Functionality
+function initializeNewChatModal() {
+    const $newChatButton = $('#newChatButton');
+    const $newChatModal = $('#newChatModal');
+    const $closeButton = $newChatModal.find('.close-button');
+    const $createButton = $('#createChatButton');
 
     function openModal() {
-        $settingsModal.fadeIn(200);
+        $newChatModal.fadeIn(200);
         $('body').css('overflow', 'hidden');
     }
 
     function closeModal() {
-        $settingsModal.fadeOut(200);
+        $newChatModal.fadeOut(200);
         $('body').css('overflow', '');
     }
 
+    async function handleCreateChat() {
+        // Check if current chat is empty
+        const currentHistory = $('#history').val().trim();
+        if (currentChatId && !currentHistory) {
+            showHint('您已经在新对话中');
+            closeModal();
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/chats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-ID': getDeviceId()
+                },
+                body: JSON.stringify({
+                    chat_mode: $('#chatModeSelector').val(),
+                    model_name: $('#modelSelector').val()
+                })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'success') {
+                currentChatId = data.chat.chat_id;
+                $('#history').val(''); // Clear history for new chat
+                closeModal();
+            } else {
+                console.error('Error creating new chat:', data.message);
+            }
+        } catch (error) {
+            console.error('Error creating new chat:', error);
+        }
+    }
+
     // Event Listeners for Modal
-    $settingsButton.on('click', openModal);
+    $newChatButton.on('click', openModal);
     $closeButton.on('click', closeModal);
+    $createButton.on('click', handleCreateChat);
 
     // Close modal when clicking outside
     $(window).on('click', (event) => {
-        if ($(event.target).is($settingsModal)) {
+        if ($(event.target).is($newChatModal)) {
             closeModal();
         }
     });
 
     // Close modal with Escape key
     $(document).on('keydown', (event) => {
-        if (event.key === 'Escape' && $settingsModal.is(':visible')) {
+        if (event.key === 'Escape' && $newChatModal.is(':visible')) {
             closeModal();
         }
     });
@@ -190,11 +193,8 @@ function initializeSettingsModal() {
 // Initialize on page load
 $(document).ready(async function() {
     // Initialize modals
-    initializeSettingsModal();
+    initializeNewChatModal();
     initializeChatHistoryModal();
-
-    // Initialize new chat button
-    $('#newChatButton').on('click', createNewChat);
 
     // Create initial chat if none exists
     try {
@@ -213,11 +213,13 @@ $(document).ready(async function() {
             $('#history').val(chatHistory);
             $('#chatModeSelector').val(data.chats[0].chat_mode);
         } else {
-            await createNewChat();
+            // Show new chat modal for initial chat creation
+            $('#newChatButton').click();
         }
     } catch (error) {
         console.error('Error fetching chats:', error);
-        await createNewChat();
+        // Show new chat modal for initial chat creation
+        $('#newChatButton').click();
     }
 
     // Update chat mode when dropdown changes

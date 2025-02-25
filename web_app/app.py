@@ -40,12 +40,13 @@ def get_system_prompt(chat_mode):
     }
     return prompts.get(chat_mode, SYSTEM_PROMPT_FREE_TALK)
 
-def create_new_chat(device_id, chat_mode='free_talk'):
+def create_new_chat(device_id, chat_mode='free_talk', model_name='qwen-max'):
     chat_id = str(uuid.uuid4())
     chat = {
         'chat_id': chat_id,
         'device_id': device_id,
         'chat_mode': chat_mode,
+        'model_name': model_name,
         'history': [{"role": "system", "content": get_system_prompt(chat_mode)}]
     }
     chats[chat_id] = chat
@@ -70,7 +71,8 @@ def chat_handler():
         # Create a new chat
         data = request.json
         chat_mode = data.get('chat_mode', 'free_talk')
-        new_chat = create_new_chat(device_id, chat_mode)
+        model_name = data.get('model_name', 'qwen-max')
+        new_chat = create_new_chat(device_id, chat_mode, model_name)
         return jsonify({"status": "success", "chat": new_chat})
 
 @app.route('/api/chats/<chat_id>', methods=['GET', 'PUT', 'DELETE'])
